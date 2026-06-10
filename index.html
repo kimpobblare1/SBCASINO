@@ -503,7 +503,7 @@ async function calcPrize() {
   const totalPool = paidUsers.length * entryFee;
   const completedMatches = matches.filter(m => m.result_home !== null && m.result_home !== undefined);
 
-  const scores = users.map(u => {
+  const scores = users.filter(u => u.id !== 'admin').map(u => {
     const myPreds = preds.filter(p => p.user_id === u.id);
     let wins = 0;
     completedMatches.forEach(m => {
@@ -523,8 +523,11 @@ async function calcPrize() {
 // ===================== HOME =====================
 async function renderHome() {
   try {
+    const isAdminUser = CU.id === 'admin';
     const [matches, preds, prizeData] = await Promise.all([
-      dbGet('matches'), dbGet('predictions', { user_id: CU.id }), calcPrize()
+      dbGet('matches'),
+      isAdminUser ? Promise.resolve([]) : dbGet('predictions', { user_id: CU.id }),
+      calcPrize()
     ]);
 
     // 메인 경기: is_main = true 인 것, 없으면 가장 최근 경기
@@ -614,6 +617,7 @@ async function renderHome() {
 }
 
 async function saveMainPred(mid) {
+  if (CU.id === 'admin') return toast('관리자는 예측할 수 없습니다', 'e');
   const h = parseInt(document.getElementById('mh_' + mid).value);
   const a = parseInt(document.getElementById('ma_' + mid).value);
   if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return toast('점수를 올바르게 입력해주세요', 'e');
@@ -640,7 +644,10 @@ function ft(f) {
 async function renderPredict() {
   document.getElementById('MG').innerHTML = '<div class="loading"><span class="spinner"></span>불러오는 중...</div>';
   try {
-    const [matches, allPreds] = await Promise.all([dbGet('matches'), dbGet('predictions', { user_id: CU.id })]);
+    const [matches, allPreds] = await Promise.all([
+      dbGet('matches'),
+      CU.id === 'admin' ? Promise.resolve([]) : dbGet('predictions', { user_id: CU.id })
+    ]);
     let list = matches;
     if (MF==='open') list = matches.filter(m => (m.result_home === null || m.result_home === undefined) && !isKickedOff(m));
     if (MF==='closed') list = matches.filter(m => (m.result_home !== null && m.result_home !== undefined) || isKickedOff(m));
