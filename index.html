@@ -570,6 +570,36 @@ async function renderHome() {
   } catch(e) { toast('데이터 로드 실패', 'e'); }
 }
 
+// ===================== KST 킥오프 마감 체크 =====================
+// 경기 날짜/시간이 설정된 경우 KST 기준 킥오프 시간이 지나면 예측 마감
+// 날짜/시간 미설정 경기는 결과 입력 전까지 예측 가능
+function isKickedOff(match) {
+  if (!match.match_date || !match.match_time) return false;
+  // KST = UTC+9. 브라우저 로컬 시간과 무관하게 KST 기준으로 계산
+  const kstStr = match.match_date + 'T' + match.match_time + '+09:00';
+  const kickoff = new Date(kstStr);
+  return Date.now() >= kickoff.getTime();
+}
+
+function fmtKST(match) {
+  if (!match.match_date) return '';
+  const d = match.match_date; // YYYY-MM-DD
+  const t = match.match_time ? match.match_time.slice(0,5) : '';
+  return d.replace(/-/g,'.') + (t ? ' ' + t + ' KST' : '');
+}
+
+function countdown(match) {
+  if (!match.match_date || !match.match_time) return '';
+  const kstStr = match.match_date + 'T' + match.match_time + '+09:00';
+  const diff = new Date(kstStr).getTime() - Date.now();
+  if (diff <= 0) return '';
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (h >= 24) return Math.floor(h/24) + '일 후 마감';
+  if (h > 0) return h + '시간 ' + m + '분 후 마감';
+  return m + '분 후 마감';
+}
+
 // ===================== PREDICT =====================
 function ft(f) {
   MF = f;
@@ -583,9 +613,8 @@ async function renderPredict() {
   try {
     const [matches, allPreds] = await Promise.all([dbGet('matches'), dbGet('predictions', { user_id: CU.id })]);
     let list = matches;
-    if (MF==='open') list = matches.filter(m => m.result_home === null || m.result_home === undefined);
-    if (MF==='closed') list = matches.filter(m => m.result_home !== null && m.result_home !== undefined);
-    // 날짜순 정렬
+    if (MF==='open') list = matches.filter(m => (m.result_home === null || m.result_home === undefined) && !isKickedOff(m));
+    if (MF==='closed') list = matches.filter(m => (m.result_home !== null && m.result_home !== undefined) || isKickedOff(m));
     list.sort((a, b) => (a.match_date||'') > (b.match_date||'') ? 1 : -1);
 
     if (!list.length) { document.getElementById('MG').innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="eicon">⚽</div><p>해당하는 경기가 없습니다</p></div>'; return; }
@@ -595,12 +624,16 @@ async function renderPredict() {
     document.getElementById('MG').innerHTML = list.map(m => {
       const pred = allPreds.find(p => p.match_id === m.id);
       const hasResult = m.result_home !== null && m.result_home !== undefined;
+      const kicked = isKickedOff(m);
+      const locked = hasResult || kicked; // 결과 입력됐거나 킥오프 지났으면 잠금
       const won = hasResult && pred && pred.pred_home === m.result_home && pred.pred_away === m.result_away;
       const lost = hasResult && pred && !won;
-      return `<div class="mc${won?' won':lost?' lost':pred?' predicted':''}">
+      const cd = countdown(m);
+
+      return `<div class="mc${won?' won':lost?' lost':pred&&!locked?' predicted':''}">
         <div class="mmeta">
           <span><span class="sbadge ${SC[m.stage]||'sg'}">${SL[m.stage]||m.stage}</span></span>
-          <span>${m.match_date||''} ${m.match_time||''}</span>
+          <span style="font-size:11px;color:${kicked&&!hasResult?'var(--red)':'var(--g500)'};">${fmtKST(m)}</span>
         </div>
         <div class="mteams">
           <div class="team"><div class="tflag">${m.home_flag}</div><div class="tname">${m.home_name}</div></div>
@@ -613,7 +646,11 @@ async function renderPredict() {
              ${won
                ? `<div class="won-badge">🏆 당첨! 정확한 스코어 🎯</div><div style="text-align:center;font-size:11px;color:var(--g500);margin-top:4px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>`
                : `<div class="lost-badge">${pred ? `내 예측: ${pred.pred_home} - ${pred.pred_away} · 아쉽게 빗나갔어요` : '예측을 하지 않은 경기입니다'}</div>`}`
-          : `<div class="sinputs">
+          : kicked
+          ? `<div style="text-align:center;padding:10px;background:#fee2e2;border-radius:10px;font-size:13px;font-weight:700;color:#991b1b;">⛔ 킥오프! 예측 마감됨</div>
+             ${pred ? `<div class="pending-badge" style="margin-top:7px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : '<div class="lost-badge" style="margin-top:7px;">예측을 하지 않은 경기입니다</div>'}`
+          : `${cd ? `<div style="text-align:center;font-size:12px;color:#d97706;font-weight:600;margin-bottom:7px;">⏰ ${cd}</div>` : ''}
+             <div class="sinputs">
                <input class="si" type="number" min="0" max="20" id="ph_${m.id}" value="${pred ? pred.pred_home : ''}" placeholder="0" />
                <div class="ssep">-</div>
                <input class="si" type="number" min="0" max="20" id="pa_${m.id}" value="${pred ? pred.pred_away : ''}" placeholder="0" />
@@ -630,9 +667,11 @@ async function savePred(mid) {
   const a = parseInt(document.getElementById('pa_' + mid).value);
   if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return toast('점수를 올바르게 입력해주세요', 'e');
   try {
-    // 결과 이미 있으면 막기
     const matches = await dbGet('matches', { id: mid });
-    if (matches[0]?.result_home !== null && matches[0]?.result_home !== undefined) return toast('이미 결과가 나온 경기는 수정 불가', 'e');
+    const m = matches[0];
+    if (!m) return toast('경기 정보를 찾을 수 없습니다', 'e');
+    if (m.result_home !== null && m.result_home !== undefined) return toast('이미 결과가 나온 경기입니다', 'e');
+    if (isKickedOff(m)) return toast('킥오프 시간이 지나 예측이 마감됐습니다 ⛔', 'e');
     await dbUpsert('predictions', { user_id: CU.id, match_id: mid, pred_home: h, pred_away: a }, 'user_id,match_id');
     toast('예측 저장! ⚽', 's');
     renderPredict();
