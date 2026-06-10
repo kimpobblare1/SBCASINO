@@ -228,13 +228,13 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
     <h1 class="ltitle">월드컵 스코어 챌린지</h1>
     <p class="lsub">2026 FIFA 월드컵 · 1만원 베팅 게임</p>
     <div id="LM">
-      <div class="fg"><label class="flabel">닉네임</label><input class="fi" id="lname" type="text" placeholder="닉네임 입력" /></div>
+      <div class="fg"><label class="flabel">이름</label><input class="fi" id="lname" type="text" placeholder="이름 입력" /></div>
       <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="lpw" type="password" placeholder="비밀번호 입력" /></div>
       <button class="btn" onclick="doLogin()">입장하기 🚀</button>
       <div class="lswitch">처음이라면? <a onclick="sw('R')">회원가입</a> &nbsp;|&nbsp; <a onclick="sw('A')">관리자</a></div>
     </div>
     <div id="RM" style="display:none;">
-      <div class="fg"><label class="flabel">닉네임 (공개됨)</label><input class="fi" id="rname" type="text" placeholder="닉네임 설정" /></div>
+      <div class="fg"><label class="flabel">이름</label><input class="fi" id="rname" type="text" placeholder="이름 입력" /></div>
       <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="rpw" type="password" placeholder="비밀번호 설정" /></div>
       <button class="btn" onclick="doRegister()">가입하고 시작하기 🎉</button>
       <div class="lswitch"><a onclick="sw('L')">← 로그인으로</a></div>
@@ -436,11 +436,11 @@ function sw(m) {
 async function doLogin() {
   const name = document.getElementById('lname').value.trim();
   const pw = document.getElementById('lpw').value;
-  if (!name || !pw) return toast('닉네임과 비밀번호를 입력하세요', 'e');
+  if (!name || !pw) return toast('이름과 비밀번호를 입력하세요', 'e');
   try {
     const users = await dbGet('users', { name });
     const user = users.find(u => u.pw === pw);
-    if (!user) return toast('닉네임 또는 비밀번호가 틀렸습니다', 'e');
+    if (!user) return toast('이름 또는 비밀번호가 틀렸습니다', 'e');
     enterApp(user, false);
   } catch(e) { toast('오류: ' + e.message, 'e'); }
 }
@@ -448,11 +448,11 @@ async function doLogin() {
 async function doRegister() {
   const name = document.getElementById('rname').value.trim();
   const pw = document.getElementById('rpw').value;
-  if (!name || !pw) return toast('닉네임과 비밀번호를 입력하세요', 'e');
-  if (name.length < 2) return toast('닉네임은 2글자 이상이어야 합니다', 'e');
+  if (!name || !pw) return toast('이름과 비밀번호를 입력하세요', 'e');
+  if (name.length < 2) return toast('이름은 2글자 이상이어야 합니다', 'e');
   try {
     const exists = await dbGet('users', { name });
-    if (exists.length > 0) return toast('이미 사용 중인 닉네임입니다', 'e');
+    if (exists.length > 0) return toast('이미 사용 중인 이름입니다', 'e');
     const user = await dbInsert('users', { name, pw, entry_fee_paid: false });
     toast('가입 완료! 환영합니다 🎉', 's');
     enterApp(user, false);
