@@ -372,36 +372,13 @@ const COUNTRIES=[
 ];
 
 // ===================== SUPABASE INIT =====================
-let sb = null;
+const SUPABASE_URL = 'https://mqzqhveoicdydgkyyvta.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xenFodmVvaWNkeWRna3l5dnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNzk1NDMsImV4cCI6MjA5NjY1NTU0M30.hlrWSOFvNhxgYEkMIFlc2g1uZqP5pPyZnhgnVtUpjdY';
 
-function initSupabase(url, key) {
-  sb = window.supabase.createClient(url, key);
-}
+let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function saveSetup() {
-  const url = document.getElementById('SB_URL').value.trim();
-  const key = document.getElementById('SB_KEY').value.trim();
-  if (!url || !key) return toast('URL과 키를 모두 입력해주세요', 'e');
-  if (!url.startsWith('https://')) return toast('URL은 https://로 시작해야 합니다', 'e');
-  if (!key.startsWith('sb_publishable_') && !key.startsWith('eyJ')) return toast('Publishable key(sb_publishable_...) 또는 anon key(eyJ...)를 입력해주세요', 'e');
-  localStorage.setItem('sb_url', url);
-  localStorage.setItem('sb_key', key);
-  initSupabase(url, key);
-  document.getElementById('SETUP').style.display = 'none';
-  document.getElementById('LP').style.display = '';
-  toast('연결 완료! 🎉', 's');
-}
-
-// 저장된 설정 자동 로드
-(function() {
-  const url = localStorage.getItem('sb_url');
-  const key = localStorage.getItem('sb_key');
-  if (url && key) {
-    initSupabase(url, key);
-    document.getElementById('SETUP').style.display = 'none';
-    document.getElementById('LP').style.display = '';
-  }
-})();
+document.getElementById('SETUP').style.display = 'none';
+document.getElementById('LP').style.display = '';
 
 // ===================== STATE =====================
 let CU = null, IA = false, SH = null, SA = null, CMT = null, MF = 'open';
