@@ -228,13 +228,20 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
     <h1 class="ltitle">월드컵 스코어 챌린지</h1>
     <p class="lsub">2026 FIFA 월드컵 · 1만원 베팅 게임</p>
     <div id="LM">
-      <div class="fg"><label class="flabel">이름</label><input class="fi" id="lname" type="text" placeholder="이름 입력" /></div>
+      <div class="fg"><label class="flabel">닉네임</label><input class="fi" id="lname" type="text" placeholder="닉네임 입력" /></div>
       <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="lpw" type="password" placeholder="비밀번호 입력" /></div>
       <button class="btn" onclick="doLogin()">입장하기 🚀</button>
       <div class="lswitch">처음이라면? <a onclick="sw('R')">회원가입</a> &nbsp;|&nbsp; <a onclick="sw('A')">관리자</a></div>
     </div>
     <div id="RM" style="display:none;">
-      <div class="fg"><label class="flabel">이름</label><input class="fi" id="rname" type="text" placeholder="이름 입력" /></div>
+      <div class="fg"><label class="flabel">닉네임 <span style="color:var(--g400);font-weight:400;">(랭킹 등에 공개됩니다)</span></label><input class="fi" id="rname" type="text" placeholder="예: 축구왕, 손흥민팬 등" /></div>
+      <div class="fg">
+        <label class="flabel">실명 <span style="color:var(--g400);font-weight:400;">(관리자만 확인)</span></label>
+        <input class="fi" id="rrealname" type="text" placeholder="홍길동" />
+        <div style="margin-top:5px;padding:8px 10px;background:#f0fdf4;border-radius:6px;font-size:11px;color:#166534;">
+          💡 모임통장 입금 확인용으로만 사용됩니다. 다른 참가자에게는 공개되지 않습니다.
+        </div>
+      </div>
       <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="rpw" type="password" placeholder="비밀번호 설정" /></div>
       <button class="btn" onclick="doRegister()">가입하고 시작하기 🎉</button>
       <div class="lswitch"><a onclick="sw('L')">← 로그인으로</a></div>
@@ -447,13 +454,16 @@ async function doLogin() {
 
 async function doRegister() {
   const name = document.getElementById('rname').value.trim();
+  const realname = document.getElementById('rrealname').value.trim();
   const pw = document.getElementById('rpw').value;
-  if (!name || !pw) return toast('이름과 비밀번호를 입력하세요', 'e');
-  if (name.length < 2) return toast('이름은 2글자 이상이어야 합니다', 'e');
+  if (!name || !pw) return toast('닉네임과 비밀번호를 입력하세요', 'e');
+  if (!realname) return toast('실명을 입력해주세요', 'e');
+  if (name.length < 2) return toast('닉네임은 2글자 이상이어야 합니다', 'e');
+  if (realname.length < 2) return toast('실명은 2글자 이상이어야 합니다', 'e');
   try {
     const exists = await dbGet('users', { name });
-    if (exists.length > 0) return toast('이미 사용 중인 이름입니다', 'e');
-    const user = await dbInsert('users', { name, pw, entry_fee_paid: false });
+    if (exists.length > 0) return toast('이미 사용 중인 닉네임입니다', 'e');
+    const user = await dbInsert('users', { name, real_name: realname, pw, entry_fee_paid: false });
     toast('가입 완료! 환영합니다 🎉', 's');
     enterApp(user, false);
   } catch(e) { toast('오류: ' + e.message, 'e'); }
@@ -751,16 +761,18 @@ async function renderUserList() {
     const { scores } = await calcPrize();
     if (!scores.length) { document.getElementById('UL').innerHTML = '<p style="color:var(--g500);font-size:13px;">참가자 없음</p>'; return; }
     document.getElementById('UL').innerHTML = `<table class="prize-table" style="width:100%;">
-      <thead><tr><th>참가자</th><th>참가비</th><th>당첨 횟수</th><th>조작</th></tr></thead>
+      <thead><tr><th>닉네임</th><th>실명 (입금자 확인용)</th><th>참가비</th><th>당첨 횟수</th><th>조작</th></tr></thead>
       <tbody>${scores.map(s => `<tr>
-        <td>${s.name}</td>
+        <td style="font-weight:600;">${s.name}</td>
+        <td style="color:var(--g700);">${s.real_name || '<span style="color:var(--g400);font-size:12px;">미입력</span>'}</td>
         <td><span class="pb ${s.entry_fee_paid?'pb-y':'pb-n'}">${s.entry_fee_paid?'✓ 납부':'미납'}</span></td>
         <td>${s.wins>0?'🎯 '+s.wins+'회':'-'}</td>
         <td>${s.entry_fee_paid
           ? `<button class="btn btn-sm btn-red" onclick="setPaid('${s.id}',false)" style="font-size:11px;">납부 취소</button>`
           : `<button class="btn btn-sm" onclick="setPaid('${s.id}',true)" style="font-size:11px;padding:5px 9px;">납부 확인 ✓</button>`}
         </td>
-      </tr>`).join('')}</tbody></table>`;
+      </tr>`).join('')}</tbody>
+    </table>`;
   } catch(e) {}
 }
 
