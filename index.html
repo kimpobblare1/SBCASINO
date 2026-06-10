@@ -259,11 +259,10 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   <div class="hdr">
     <div class="logo">⚽ 월드컵 챌린지</div>
     <div class="nav">
-      <button class="nbtn act" id="n-home" onclick="go('home')">홈</button>
-      <button class="nbtn" id="n-predict" onclick="go('predict')">스코어 예측</button>
-      <button class="nbtn" id="n-rank" onclick="go('rank')">랭킹</button>
-      <button class="nbtn" id="n-prize" onclick="go('prize')">상금 현황 🏆</button>
-      <button class="nbtn" id="n-admin" onclick="go('admin')" style="display:none;">관리자</button>
+      <button class="nbtn act" id="n-home" onclick="go('home')">🏠 홈</button>
+      <button class="nbtn" id="n-rank" onclick="go('rank')">🏅 랭킹</button>
+      <button class="nbtn" id="n-prize" onclick="go('prize')">🏆 상금 현황</button>
+      <button class="nbtn" id="n-admin" onclick="go('admin')" style="display:none;">⚙️ 관리자</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
       <div class="ubadge" id="UB"></div>
@@ -271,25 +270,10 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
     </div>
   </div>
 
-  <!-- HOME -->
+  <!-- HOME = 메인 예측 화면 -->
   <div class="page act" id="p-home">
-    <div class="hero"><div><div class="htitle">🏆 2026 FIFA 월드컵</div><div class="hsub">정확한 스코어를 맞히면 상금을 가져가세요!</div></div><div style="font-size:58px;">🌍</div></div>
+    <div id="main-match-wrap"></div>
     <div class="sgrid" id="SG"></div>
-    <div class="card"><div class="ctitle">📋 최근 경기</div><div id="RM2"></div></div>
-  </div>
-
-  <!-- PREDICT -->
-  <div class="page" id="p-predict">
-    <div class="card" style="margin-bottom:13px;">
-      <div class="ctitle">⚽ 스코어 예측</div>
-      <p style="font-size:13px;color:var(--g500);">정확한 스코어(양 팀 득점 모두 일치)를 맞히면 <strong>🏆 당첨!</strong> 틀리면 점수 없음. 당첨자끼리 상금을 1/n 분배합니다.</p>
-    </div>
-    <div class="tabs">
-      <button class="tab act" id="t-open" onclick="ft('open')">예측 가능</button>
-      <button class="tab" id="t-closed" onclick="ft('closed')">결과 확인</button>
-      <button class="tab" id="t-all" onclick="ft('all')">전체</button>
-    </div>
-    <div class="mgrid" id="MG"></div>
   </div>
 
   <!-- RANK -->
@@ -504,7 +488,6 @@ function go(p) {
   document.getElementById('p-' + p).classList.add('act');
   document.getElementById('n-' + p).classList.add('act');
   if (p==='home') renderHome();
-  if (p==='predict') renderPredict();
   if (p==='rank') renderRank();
   if (p==='prize') renderPrize();
   if (p==='admin') renderAdmin();
@@ -540,60 +523,110 @@ async function calcPrize() {
 // ===================== HOME =====================
 async function renderHome() {
   try {
-    const { scores, totalPool, completedMatchCount, matches, preds } = await calcPrize();
-    const me = scores.find(s => s.id === CU.id) || { wins: 0, predicted: 0 };
+    const [matches, preds, prizeData] = await Promise.all([
+      dbGet('matches'), dbGet('predictions', { user_id: CU.id }), calcPrize()
+    ]);
+
+    // 메인 경기: is_main = true 인 것, 없으면 가장 최근 경기
+    const mainMatch = matches.find(m => m.is_main) || matches.sort((a,b) => (b.created_at||'') > (a.created_at||'') ? 1:-1)[0];
+    const wrap = document.getElementById('main-match-wrap');
+
+    if (!mainMatch) {
+      wrap.innerHTML = `<div class="card" style="text-align:center;padding:50px 20px;">
+        <div style="font-size:48px;margin-bottom:12px;">⚽</div>
+        <div style="font-size:17px;font-weight:700;color:var(--g700);">진행 중인 경기가 없습니다</div>
+        <div style="font-size:13px;color:var(--g500);margin-top:6px;">관리자가 경기를 등록하면 여기에 표시됩니다</div>
+      </div>`;
+    } else {
+      const pred = preds.find(p => p.match_id === mainMatch.id);
+      const hasResult = mainMatch.result_home !== null && mainMatch.result_home !== undefined;
+      const kicked = isKickedOff(mainMatch);
+      const locked = hasResult || kicked;
+      const won = hasResult && pred && pred.pred_home === mainMatch.result_home && pred.pred_away === mainMatch.result_away;
+      const cd = countdown(mainMatch);
+      const SL={group:'조별리그',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
+      const SC={group:'sg',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
+
+      wrap.innerHTML = `
+        <div style="background:linear-gradient(135deg,var(--green-d),var(--green));border-radius:var(--r);padding:22px;margin-bottom:16px;color:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span class="sbadge ${SC[mainMatch.stage]||'sg'}" style="font-size:12px;padding:3px 10px;">${SL[mainMatch.stage]||mainMatch.stage}</span>
+            <span style="font-size:12px;opacity:.75;">${fmtKST(mainMatch)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-around;padding:20px 0 16px;">
+            <div style="text-align:center;flex:1;">
+              <div style="font-size:52px;">${mainMatch.home_flag}</div>
+              <div style="font-size:16px;font-weight:700;margin-top:6px;">${mainMatch.home_name}</div>
+            </div>
+            <div style="text-align:center;flex-shrink:0;padding:0 12px;">
+              ${hasResult
+                ? `<div style="font-size:42px;font-weight:800;letter-spacing:4px;">${mainMatch.result_home} - ${mainMatch.result_away}</div>
+                   <div style="font-size:11px;opacity:.7;margin-top:4px;">최종 결과</div>`
+                : `<div style="font-size:22px;font-weight:700;opacity:.5;">VS</div>`}
+            </div>
+            <div style="text-align:center;flex:1;">
+              <div style="font-size:52px;">${mainMatch.away_flag}</div>
+              <div style="font-size:16px;font-weight:700;margin-top:6px;">${mainMatch.away_name}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;">
+          ${hasResult
+            ? won
+              ? `<div class="won-badge" style="font-size:18px;padding:16px;">🏆 당첨! 정확한 스코어를 맞혔습니다 🎯</div>
+                 <div style="text-align:center;font-size:13px;color:var(--g500);margin-top:8px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>`
+              : `<div class="lost-badge" style="font-size:14px;padding:14px;">
+                   ${pred ? `내 예측: ${pred.pred_home} - ${pred.pred_away} · 아쉽게 빗나갔어요 😢` : '이 경기에 예측을 하지 않았습니다'}
+                 </div>`
+            : kicked
+            ? `<div style="text-align:center;padding:14px;background:#fee2e2;border-radius:10px;font-size:14px;font-weight:700;color:#991b1b;">⛔ 킥오프! 예측이 마감되었습니다</div>
+               ${pred ? `<div class="pending-badge" style="margin-top:8px;font-size:13px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : ''}`
+            : `<div style="font-size:13px;color:var(--g500);margin-bottom:12px;text-align:center;">
+                 정확한 스코어를 맞히면 <strong style="color:var(--green);">🏆 당첨!</strong> 당첨자끼리 상금을 1/n으로 나눕니다
+               </div>
+               ${cd ? `<div style="text-align:center;font-size:13px;color:#d97706;font-weight:600;margin-bottom:10px;">⏰ ${cd}</div>` : ''}
+               <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                 <div style="flex:1;text-align:center;font-size:14px;font-weight:600;color:var(--g700);">${mainMatch.home_name}</div>
+                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                   <input class="si" type="number" min="0" max="20" id="mh_${mainMatch.id}" value="${pred ? pred.pred_home : ''}" placeholder="0" style="width:64px;font-size:26px;" />
+                   <span style="font-size:20px;font-weight:700;color:var(--g400);">-</span>
+                   <input class="si" type="number" min="0" max="20" id="ma_${mainMatch.id}" value="${pred ? pred.pred_away : ''}" placeholder="0" style="width:64px;font-size:26px;" />
+                 </div>
+                 <div style="flex:1;text-align:center;font-size:14px;font-weight:600;color:var(--g700);">${mainMatch.away_name}</div>
+               </div>
+               <button class="pbtn" style="font-size:15px;padding:13px;" onclick="saveMainPred('${mainMatch.id}')">
+                 ${pred ? '✓ 저장됨 · 수정하기' : '예측 저장하기 ⚽'}
+               </button>
+               ${pred ? `<div class="pending-badge" style="margin-top:8px;">현재 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : ''}`}
+        </div>`;
+    }
+
+    // 통계
+    const me = prizeData.scores?.find(s => s.id === CU.id) || { wins:0, predicted:0 };
     document.getElementById('SG').innerHTML = `
       <div class="sc"><div class="sn">${matches.length}</div><div class="sl">전체 경기</div></div>
       <div class="sc"><div class="sn">${me.predicted}</div><div class="sl">내 예측 수</div></div>
       <div class="sc"><div class="sn">${me.wins}</div><div class="sl">당첨 횟수 🎯</div></div>
-      <div class="sc"><div class="sn">${fmt(totalPool)}</div><div class="sl">총 상금 풀</div></div>
+      <div class="sc"><div class="sn">${fmt(prizeData.totalPool)}</div><div class="sl">총 상금 풀</div></div>
     `;
-    const recent = matches.slice(-4).reverse();
-    if (!recent.length) { document.getElementById('RM2').innerHTML = '<div class="empty"><div class="eicon">📭</div><p>아직 경기가 없습니다</p></div>'; return; }
-    const myPreds = preds.filter(p => p.user_id === CU.id);
-    document.getElementById('RM2').innerHTML = recent.map(m => {
-      const pred = myPreds.find(p => p.match_id === m.id);
-      const won = pred && m.result_home !== null && pred.pred_home === m.result_home && pred.pred_away === m.result_away;
-      return `<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--g100);">
-        <div style="font-size:21px;">${m.home_flag}</div>
-        <div style="flex:1;font-weight:600;font-size:12px;">${m.home_name}</div>
-        ${m.result_home !== null && m.result_home !== undefined ? `<div style="font-weight:800;font-size:14px;">${m.result_home} - ${m.result_away}</div>` : '<div style="color:var(--g400);font-size:11px;">예정</div>'}
-        <div style="flex:1;text-align:right;font-weight:600;font-size:12px;">${m.away_name}</div>
-        <div style="font-size:21px;">${m.away_flag}</div>
-        ${won ? '<span style="font-size:16px;">🎯</span>' : ''}
-      </div>`;
-    }).join('');
-  } catch(e) { toast('데이터 로드 실패', 'e'); }
+  } catch(e) { toast('데이터 로드 실패: '+e.message, 'e'); }
 }
 
-// ===================== KST 킥오프 마감 체크 =====================
-// 경기 날짜/시간이 설정된 경우 KST 기준 킥오프 시간이 지나면 예측 마감
-// 날짜/시간 미설정 경기는 결과 입력 전까지 예측 가능
-function isKickedOff(match) {
-  if (!match.match_date || !match.match_time) return false;
-  // KST = UTC+9. 브라우저 로컬 시간과 무관하게 KST 기준으로 계산
-  const kstStr = match.match_date + 'T' + match.match_time + '+09:00';
-  const kickoff = new Date(kstStr);
-  return Date.now() >= kickoff.getTime();
-}
-
-function fmtKST(match) {
-  if (!match.match_date) return '';
-  const d = match.match_date; // YYYY-MM-DD
-  const t = match.match_time ? match.match_time.slice(0,5) : '';
-  return d.replace(/-/g,'.') + (t ? ' ' + t + ' KST' : '');
-}
-
-function countdown(match) {
-  if (!match.match_date || !match.match_time) return '';
-  const kstStr = match.match_date + 'T' + match.match_time + '+09:00';
-  const diff = new Date(kstStr).getTime() - Date.now();
-  if (diff <= 0) return '';
-  const h = Math.floor(diff / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  if (h >= 24) return Math.floor(h/24) + '일 후 마감';
-  if (h > 0) return h + '시간 ' + m + '분 후 마감';
-  return m + '분 후 마감';
+async function saveMainPred(mid) {
+  const h = parseInt(document.getElementById('mh_' + mid).value);
+  const a = parseInt(document.getElementById('ma_' + mid).value);
+  if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return toast('점수를 올바르게 입력해주세요', 'e');
+  try {
+    const matches = await dbGet('matches', { id: mid });
+    const m = matches[0];
+    if (!m) return toast('경기 정보를 찾을 수 없습니다', 'e');
+    if (m.result_home !== null && m.result_home !== undefined) return toast('이미 결과가 나온 경기입니다', 'e');
+    if (isKickedOff(m)) return toast('킥오프 시간이 지나 예측이 마감됐습니다 ⛔', 'e');
+    await dbUpsert('predictions', { user_id: CU.id, match_id: mid, pred_home: h, pred_away: a }, 'user_id,match_id');
+    toast('예측 저장! ⚽', 's');
+    renderHome();
+  } catch(e) { toast('저장 실패: ' + e.message, 'e'); }
 }
 
 // ===================== PREDICT =====================
@@ -740,9 +773,9 @@ async function renderAdminMatches() {
     const SL={group:'조별',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
     if (!matches.length) { document.getElementById('AML').innerHTML = '<div class="empty"><div class="eicon">📋</div><p>경기 없음</p></div>'; return; }
     document.getElementById('AML').innerHTML = matches.map((m, i) => `
-      <div class="ami">
+      <div class="ami" style="${m.is_main ? 'border:2px solid var(--gold);background:#fffbeb;' : ''}">
         <div style="font-size:11px;color:var(--g400);min-width:20px;">#${i+1}</div>
-        <div class="amt">${m.home_flag} ${m.home_name} <span style="color:var(--g400);font-size:10px;">${SL[m.stage]||m.stage}</span> ${m.away_flag} ${m.away_name}</div>
+        <div class="amt">${m.is_main ? '<span style="font-size:11px;background:var(--gold);color:#78350f;padding:1px 6px;border-radius:4px;font-weight:700;">MAIN</span> ' : ''}${m.home_flag} ${m.home_name} <span style="color:var(--g400);font-size:10px;">${SL[m.stage]||m.stage}</span> ${m.away_flag} ${m.away_name}</div>
         <div style="font-size:11px;color:var(--g500);">${m.match_date||''}</div>
         <div style="display:flex;align-items:center;gap:4px;">
           <span style="font-size:11px;color:var(--g500);">결과</span>
@@ -751,6 +784,9 @@ async function renderAdminMatches() {
           <input class="ri" type="number" min="0" max="20" id="ra_${m.id}" value="${m.result_away !== null && m.result_away !== undefined ? m.result_away : ''}" placeholder="원정" />
           <button class="srb" onclick="saveResult('${m.id}')">저장</button>
         </div>
+        ${m.is_main
+          ? '<span style="font-size:11px;color:#b45309;font-weight:600;">📌 메인</span>'
+          : `<button class="srb" style="background:var(--gold);color:#78350f;" onclick="setMain('${m.id}')">메인 지정</button>`}
         <button class="del" onclick="delMatch('${m.id}')">🗑</button>
       </div>`).join('');
   } catch(e) { toast('경기 목록 로드 실패', 'e'); }
@@ -808,6 +844,20 @@ async function delMatch(id) {
     toast('경기 삭제됨', 'e');
     renderAdminMatches();
   } catch(e) { toast('삭제 실패: ' + e.message, 'e'); }
+}
+
+async function setMain(matchId) {
+  try {
+    const matches = await dbGet('matches');
+    // 기존 메인 해제
+    for (const m of matches.filter(m => m.is_main)) {
+      await dbUpdate('matches', m.id, { is_main: false });
+    }
+    // 새 메인 지정
+    await dbUpdate('matches', matchId, { is_main: true });
+    toast('메인 경기가 지정되었습니다 📌', 's');
+    renderAdminMatches();
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
 }
 
 async function setPaid(userId, paid) {
