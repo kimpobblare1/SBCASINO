@@ -180,11 +180,70 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
 .loading{text-align:center;padding:36px;color:rgba(255,255,255,.7);font-size:14px;}
 .csel{width:100%;padding:9px 11px;border:1.5px solid var(--g200);border-radius:var(--r-sm);font-size:13px;}
 
+/* ===== 태블릿 ===== */
+@media(max-width:768px){
+  .mgrid{grid-template-columns:1fr 1fr;}
+  .sgrid{grid-template-columns:repeat(2,1fr);}
+  .prize-pool{font-size:36px;}
+}
+
+/* ===== 모바일 ===== */
 @media(max-width:600px){
-  .hero{flex-direction:column;gap:10px;text-align:center;}
+  /* 헤더 */
+  .hdr{padding:10px 12px;gap:6px;}
+  .logo{font-size:17px;}
+  .nav{gap:4px;}
+  .nbtn{padding:5px 10px;font-size:12px;}
+  .ubadge{padding:4px 9px;font-size:11px;}
+
+  /* 페이지 패딩 */
+  .page{padding:12px;}
+
+  /* 카드 */
+  .card{padding:14px;margin-bottom:12px;}
+  .ctitle{font-size:15px;}
+
+  /* 통계 그리드 */
+  .sgrid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .sc{padding:12px 8px;}
+  .sn{font-size:22px;}
+  .sl{font-size:11px;}
+
+  /* 경기 카드 */
   .mgrid{grid-template-columns:1fr;}
-  .aform{grid-template-columns:1fr;}
-  .cgrid{grid-template-columns:repeat(2,1fr);}
+  .mc{padding:14px;}
+  .tflag{font-size:28px;}
+  .tname{font-size:11px;}
+  .si{font-size:20px;padding:8px;}
+
+  /* 상금 현황 */
+  .prize-hero{padding:20px 16px;}
+  .prize-pool{font-size:34px;}
+  .prize-table th,.prize-table td{padding:8px 10px;font-size:12px;}
+
+  /* 랭킹 */
+  .rtable th,.rtable td{padding:8px 10px;font-size:12px;}
+  .rnum{width:24px;height:24px;font-size:11px;}
+
+  /* 로그인 박스 */
+  .lb{padding:28px 20px;}
+  .ltitle{font-size:22px;}
+  .licon{font-size:46px;}
+
+  /* 관리자 */
+  .aform{grid-template-columns:1fr;gap:8px;}
+  .ami{flex-wrap:wrap;gap:7px;padding:10px 12px;}
+  .amt{min-width:100%;font-size:12px;}
+  .ri{width:38px;font-size:14px;}
+
+  /* 국가 선택 모달 */
+  .cgrid{grid-template-columns:repeat(2,1fr);gap:5px;padding:10px 14px;}
+  .ci{padding:7px 8px;font-size:11px;}
+  .mb{width:95%;max-height:85vh;}
+
+  /* 탭 */
+  .tabs{padding:3px;}
+  .tab{font-size:12px;padding:7px 6px;}
 }
 </style>
 </head>
@@ -243,15 +302,6 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
         </div>
       </div>
       <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="rpw" type="password" placeholder="비밀번호 설정" /></div>
-      <div style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:left;">
-        <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px;">💰 참가비 입금 안내</div>
-        <div style="font-size:13px;color:#78350f;line-height:1.7;">
-          <div>은행: <strong>저축은행</strong></div>
-          <div>계좌: <strong>650-61-21-0138967</strong></div>
-          <div>금액: <strong>10,000원</strong></div>
-          <div style="margin-top:6px;font-size:12px;color:#92400e;">⚠️ 입금자명을 <strong>실명</strong>으로 입금해주세요.<br>관리자 확인 후 참가 처리됩니다.</div>
-        </div>
-      </div>
       <button class="btn" onclick="doRegister()">가입하고 시작하기 🎉</button>
       <div class="lswitch"><a onclick="sw('L')">← 로그인으로</a></div>
     </div>
@@ -270,7 +320,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
     <div class="nav">
       <button class="nbtn act" id="n-home" onclick="go('home')">🏠 홈</button>
       <button class="nbtn" id="n-rank" onclick="go('rank')">🏅 랭킹</button>
-      <button class="nbtn" id="n-prize" onclick="go('prize')">💰 팟 현황</button>
+      <button class="nbtn" id="n-prize" onclick="go('prize')">💰 판돈 현황</button>
       <button class="nbtn" id="n-admin" onclick="go('admin')" style="display:none;">⚙️ 관리자</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
@@ -289,7 +339,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   <div class="page" id="p-rank">
     <div class="card">
       <div class="ctitle">🏅 SB토토 랭킹</div>
-      <div style="font-size:12px;color:var(--g500);margin-bottom:13px;">정확한 스코어를 맞혀야 당첨! 당첨 횟수가 많을수록 팟이 많아집니다.</div>
+      <div style="font-size:12px;color:var(--g500);margin-bottom:13px;">정확한 스코어를 맞혀야 당첨! 당첨 횟수가 많을수록 판돈이 많아집니다.</div>
       <div style="overflow-x:auto;"><table class="rtable"><thead><tr>
         <th style="width:50px;">순위</th><th>참가자</th><th>예측 수</th><th>당첨 횟수</th><th>예상 상금</th>
       </tr></thead><tbody id="RB"></tbody></table></div>
@@ -299,7 +349,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   <!-- PRIZE -->
   <div class="page" id="p-prize">
     <div class="prize-hero">
-      <div style="font-size:13px;opacity:.8;margin-bottom:3px;">현재 팟(Pot)</div>
+      <div style="font-size:13px;opacity:.8;margin-bottom:3px;">현재 판돈</div>
       <div class="prize-pool" id="PP">-</div>
       <div style="font-size:13px;opacity:.8;" id="PS"></div>
     </div>
@@ -594,18 +644,18 @@ async function renderHome() {
           </div>
           <div style="display:flex;align-items:center;justify-content:space-around;padding:20px 0 16px;">
             <div style="text-align:center;flex:1;">
-              <div style="font-size:52px;">${mainMatch.home_flag}</div>
-              <div style="font-size:16px;font-weight:700;margin-top:6px;">${mainMatch.home_name}</div>
+              <div style="font-size:clamp(36px,8vw,52px);">${mainMatch.home_flag}</div>
+              <div style="font-size:clamp(13px,3vw,16px);font-weight:700;margin-top:6px;">${mainMatch.home_name}</div>
             </div>
             <div style="text-align:center;flex-shrink:0;padding:0 12px;">
               ${hasResult
-                ? `<div style="font-size:42px;font-weight:800;letter-spacing:4px;">${mainMatch.result_home} - ${mainMatch.result_away}</div>
+                ? `<div style="font-size:clamp(28px,6vw,42px);font-weight:800;letter-spacing:2px;">${mainMatch.result_home} - ${mainMatch.result_away}</div>
                    <div style="font-size:11px;opacity:.7;margin-top:4px;">최종 결과</div>`
                 : `<div style="font-size:22px;font-weight:700;opacity:.5;">VS</div>`}
             </div>
             <div style="text-align:center;flex:1;">
-              <div style="font-size:52px;">${mainMatch.away_flag}</div>
-              <div style="font-size:16px;font-weight:700;margin-top:6px;">${mainMatch.away_name}</div>
+              <div style="font-size:clamp(36px,8vw,52px);">${mainMatch.away_flag}</div>
+              <div style="font-size:clamp(13px,3vw,16px);font-weight:700;margin-top:6px;">${mainMatch.away_name}</div>
             </div>
           </div>
         </div>
@@ -622,17 +672,17 @@ async function renderHome() {
             ? `<div style="text-align:center;padding:14px;background:#fee2e2;border-radius:10px;font-size:14px;font-weight:700;color:#991b1b;">⛔ 킥오프! 예측이 마감되었습니다</div>
                ${pred ? `<div class="pending-badge" style="margin-top:8px;font-size:13px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : ''}`
             : `<div style="font-size:13px;color:var(--g500);margin-bottom:12px;text-align:center;">
-                 정확한 스코어를 맞히면 <strong style="color:var(--green-l);">🏆 당첨!</strong> 당첨자끼리 팟을 1/n으로 나눠가집니다
+                 정확한 스코어를 맞히면 <strong style="color:var(--green-l);">🏆 당첨!</strong> 당첨자끼리 판돈을 1/n으로 나눠가집니다
                </div>
                ${cd ? `<div style="text-align:center;font-size:13px;color:#d97706;font-weight:600;margin-bottom:10px;">⏰ ${cd}</div>` : ''}
                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                 <div style="flex:1;text-align:center;font-size:14px;font-weight:600;color:var(--g700);">${mainMatch.home_name}</div>
+                 <div style="flex:1;text-align:center;font-size:clamp(12px,3vw,14px);font-weight:600;color:var(--g700);">${mainMatch.home_name}</div>
                  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-                   <input class="si" type="number" min="0" max="20" id="mh_${mainMatch.id}" value="${pred ? pred.pred_home : ''}" placeholder="0" style="width:64px;font-size:26px;" />
+                   <input class="si" type="number" min="0" max="20" id="mh_${mainMatch.id}" value="${pred ? pred.pred_home : ''}" placeholder="0" style="width:clamp(52px,12vw,64px);font-size:clamp(20px,4vw,26px);" />
                    <span style="font-size:20px;font-weight:700;color:var(--g400);">-</span>
-                   <input class="si" type="number" min="0" max="20" id="ma_${mainMatch.id}" value="${pred ? pred.pred_away : ''}" placeholder="0" style="width:64px;font-size:26px;" />
+                   <input class="si" type="number" min="0" max="20" id="ma_${mainMatch.id}" value="${pred ? pred.pred_away : ''}" placeholder="0" style="width:clamp(52px,12vw,64px);font-size:clamp(20px,4vw,26px);" />
                  </div>
-                 <div style="flex:1;text-align:center;font-size:14px;font-weight:600;color:var(--g700);">${mainMatch.away_name}</div>
+                 <div style="flex:1;text-align:center;font-size:clamp(12px,3vw,14px);font-weight:600;color:var(--g700);">${mainMatch.away_name}</div>
                </div>
                <button class="pbtn" style="font-size:15px;padding:13px;" onclick="saveMainPred('${mainMatch.id}')">
                  ${pred ? '✓ 저장됨 · 수정하기' : '예측 저장하기 ⚽'}
@@ -643,12 +693,25 @@ async function renderHome() {
 
     // 통계
     const me = prizeData.scores?.find(s => s.id === CU.id) || { wins:0, predicted:0 };
+    const isPaid = prizeData.scores?.find(s => s.id === CU.id)?.entry_fee_paid || false;
     document.getElementById('SG').innerHTML = `
       <div class="sc"><div class="sn">${matches.length}</div><div class="sl">전체 경기</div></div>
       <div class="sc"><div class="sn">${me.predicted}</div><div class="sl">내 예측 수</div></div>
       <div class="sc"><div class="sn">${me.wins}</div><div class="sl">당첨 횟수 🎯</div></div>
-      <div class="sc"><div class="sn">${fmt(prizeData.totalPool)}</div><div class="sl">총 상금 풀</div></div>
-    `;
+      <div class="sc"><div class="sn">${fmt(prizeData.totalPool)}</div><div class="sl">현재 판돈</div></div>
+    ` + (isPaid ? '' : `
+      <div style="grid-column:1/-1;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--r);padding:16px 18px;">
+        <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px;">💰 참가비 입금 안내</div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:13px;color:#78350f;margin-bottom:10px;">
+          <span>은행</span><strong>저축은행</strong>
+          <span>계좌번호</span><strong style="font-size:15px;letter-spacing:0.5px;">650-61-21-0138967</strong>
+          <span>금액</span><strong>10,000원</strong>
+        </div>
+        <div style="background:#fef3c7;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;">
+          ⚠️ 반드시 <strong>실명</strong>으로 입금해주세요. 관리자 확인 후 참가 처리됩니다.
+        </div>
+      </div>
+    `);
   } catch(e) { toast('데이터 로드 실패: '+e.message, 'e'); }
 }
 
@@ -784,10 +847,10 @@ async function renderPrize() {
           <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px;">현재 공동 1위 · 당첨자</div>
           <div style="font-size:20px;font-weight:800;color:#78350f;">🏆 ${winners.map(w=>w.name).join(', ')}</div>
           <div style="font-size:34px;font-weight:800;color:#b45309;margin:5px 0;">${fmt(prizePerWinner)}</div>
-          <div style="font-size:12px;color:#92400e;">1인당 예상 상금 · ${maxWins}회 당첨 · ${winners.length}명 분배</div>
+          <div style="font-size:12px;color:#92400e;">1인당 예상 판돈 · ${maxWins}회 당첨 · ${winners.length}명 분배</div>
         </div>`;
     } else {
-      document.getElementById('WB').innerHTML = `<div class="card" style="text-align:center;padding:28px;"><div style="font-size:32px;margin-bottom:7px;">⏳</div><div style="font-weight:600;">아직 당첨자가 없습니다</div><div style="font-size:12px;color:var(--g500);margin-top:4px;">경기 결과가 입력되면 팟 수령자가 확정됩니다</div></div>`;
+      document.getElementById('WB').innerHTML = `<div class="card" style="text-align:center;padding:28px;"><div style="font-size:32px;margin-bottom:7px;">⏳</div><div style="font-weight:600;">아직 당첨자가 없습니다</div><div style="font-size:12px;color:var(--g500);margin-top:4px;">경기 결과가 입력되면 판돈 수령자가 확정됩니다</div></div>`;
     }
 
     document.getElementById('PB').innerHTML = scores.map(s => {
