@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚽ 월드컵 스코어 챌린지</title>
-<meta property="og:title" content="⚽ 월드컵 스코어 챌린지" />
-<meta property="og:description" content="2026 FIFA 월드컵 스코어 예측 게임 · 정확한 스코어를 맞히면 상금을 가져가세요!" />
+<title>⚽ SB토토</title>
+<meta property="og:title" content="⚽ SB토토" />
+<meta property="og:description" content="SB토토 · 2026 FIFA 월드컵 스코어 예측 게임 · 정확한 스코어를 맞히면 상금을 가져가세요!" />
 <meta property="og:image" content="https://kimpobblare1.github.io/SBCASINO/thumbnail.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -17,7 +17,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --green:#1a6b3c;--green-l:#2d9b5a;--green-d:#0f4526;
+  --green:#1a3a6b;--green-l:#2a5298;--green-d:#0a1f3d;
   --gold:#f0b429;--gold-l:#fcd34d;
   --white:#fff;--g50:#f8fafc;--g100:#f1f5f9;--g200:#e2e8f0;
   --g300:#cbd5e1;--g400:#94a3b8;--g500:#64748b;--g700:#334155;--g900:#0f172a;
@@ -27,7 +27,7 @@
   --r:12px;--r-sm:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(135deg,var(--green-d),var(--green) 50%,#1a5c32);min-height:100vh;color:var(--g900);}
+body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(135deg,#0a1f3d,#1a3a6b 50%,#0d2a52);min-height:100vh;color:var(--g900);}
 
 .hdr{background:rgba(0,0,0,.28);backdrop-filter:blur(12px);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.1);flex-wrap:wrap;gap:8px;}
 .logo{font-size:19px;font-weight:800;color:#fff;display:flex;align-items:center;gap:7px;}
@@ -224,9 +224,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
 <!-- ② LOGIN -->
 <div id="LP" class="lw" style="display:none;">
   <div class="lb">
-    <div class="licon">⚽</div>
-    <h1 class="ltitle">월드컵 스코어 챌린지</h1>
-    <p class="lsub">2026 FIFA 월드컵 · 1만원 베팅 게임</p>
+    <div class="licon">🏆</div>
+    <h1 class="ltitle">SB토토</h1>
+    <p class="lsub">2026 FIFA 월드컵 스코어 맞추기</p>
     <div id="LM">
       <div class="fg"><label class="flabel">닉네임</label><input class="fi" id="lname" type="text" placeholder="닉네임 입력" /></div>
       <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="lpw" type="password" placeholder="비밀번호 입력" /></div>
@@ -239,10 +239,19 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
         <label class="flabel">실명 <span style="color:var(--g400);font-weight:400;">(관리자만 확인)</span></label>
         <input class="fi" id="rrealname" type="text" placeholder="홍길동" />
         <div style="margin-top:5px;padding:8px 10px;background:#f0fdf4;border-radius:6px;font-size:11px;color:#166534;">
-          💡 모임통장 입금 확인용으로만 사용됩니다. 다른 참가자에게는 공개되지 않습니다.
+          💡 참가비(1만원) 입금 후 관리자가 확인합니다. 다른 참가자에게는 공개되지 않습니다.
         </div>
       </div>
       <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="rpw" type="password" placeholder="비밀번호 설정" /></div>
+      <div style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:left;">
+        <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px;">💰 참가비 입금 안내</div>
+        <div style="font-size:13px;color:#78350f;line-height:1.7;">
+          <div>은행: <strong>저축은행</strong></div>
+          <div>계좌: <strong>650-61-21-0138967</strong></div>
+          <div>금액: <strong>10,000원</strong></div>
+          <div style="margin-top:6px;font-size:12px;color:#92400e;">⚠️ 입금자명을 <strong>실명</strong>으로 입금해주세요.<br>관리자 확인 후 참가 처리됩니다.</div>
+        </div>
+      </div>
       <button class="btn" onclick="doRegister()">가입하고 시작하기 🎉</button>
       <div class="lswitch"><a onclick="sw('L')">← 로그인으로</a></div>
     </div>
@@ -257,11 +266,11 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
 <!-- ③ MAIN APP -->
 <div id="APP" style="display:none;">
   <div class="hdr">
-    <div class="logo">⚽ 월드컵 챌린지</div>
+    <div class="logo" style="font-size:20px;letter-spacing:-0.5px;">🏆 SB<span style="color:var(--gold);">토토</span></div>
     <div class="nav">
       <button class="nbtn act" id="n-home" onclick="go('home')">🏠 홈</button>
       <button class="nbtn" id="n-rank" onclick="go('rank')">🏅 랭킹</button>
-      <button class="nbtn" id="n-prize" onclick="go('prize')">🏆 상금 현황</button>
+      <button class="nbtn" id="n-prize" onclick="go('prize')">💰 팟 현황</button>
       <button class="nbtn" id="n-admin" onclick="go('admin')" style="display:none;">⚙️ 관리자</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
@@ -279,8 +288,8 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   <!-- RANK -->
   <div class="page" id="p-rank">
     <div class="card">
-      <div class="ctitle">🏅 당첨 랭킹</div>
-      <div style="font-size:12px;color:var(--g500);margin-bottom:13px;">정확한 스코어를 맞혀야 당첨! 당첨 횟수가 많을수록 상금이 많아집니다.</div>
+      <div class="ctitle">🏅 SB토토 랭킹</div>
+      <div style="font-size:12px;color:var(--g500);margin-bottom:13px;">정확한 스코어를 맞혀야 당첨! 당첨 횟수가 많을수록 팟이 많아집니다.</div>
       <div style="overflow-x:auto;"><table class="rtable"><thead><tr>
         <th style="width:50px;">순위</th><th>참가자</th><th>예측 수</th><th>당첨 횟수</th><th>예상 상금</th>
       </tr></thead><tbody id="RB"></tbody></table></div>
@@ -290,7 +299,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   <!-- PRIZE -->
   <div class="page" id="p-prize">
     <div class="prize-hero">
-      <div style="font-size:13px;opacity:.8;margin-bottom:3px;">현재 총 상금 풀</div>
+      <div style="font-size:13px;opacity:.8;margin-bottom:3px;">현재 팟(Pot)</div>
       <div class="prize-pool" id="PP">-</div>
       <div style="font-size:13px;opacity:.8;" id="PS"></div>
     </div>
@@ -324,7 +333,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
     <div class="card"><div class="ctitle">📋 경기 목록 &amp; 결과 입력</div><div id="AML"></div></div>
     <div class="card">
       <div class="ctitle">💰 참가비 관리</div>
-      <p style="font-size:12px;color:var(--g500);margin-bottom:12px;">1만원 입금 확인 후 체크하세요. 납부자만 상금 수령 대상입니다.</p>
+      <p style="font-size:12px;color:var(--g500);margin-bottom:12px;">저축은행 650-61-21-0138967 · 입금자 실명 확인 후 체크하세요.</p>
       <div id="UL"></div>
     </div>
     <div class="card">
@@ -565,7 +574,7 @@ async function renderHome() {
       wrap.innerHTML = `<div class="card" style="text-align:center;padding:50px 20px;">
         <div style="font-size:48px;margin-bottom:12px;">⚽</div>
         <div style="font-size:17px;font-weight:700;color:var(--g700);">진행 중인 경기가 없습니다</div>
-        <div style="font-size:13px;color:var(--g500);margin-top:6px;">관리자가 경기를 등록하면 여기에 표시됩니다</div>
+        <div style="font-size:13px;color:var(--g500);margin-top:6px;">관리자가 경기를 등록하면 여기에 표시됩니다 · 참가비를 납부하고 예측에 참여하세요!</div>
       </div>`;
     } else {
       const pred = preds.find(p => p.match_id === mainMatch.id);
@@ -613,7 +622,7 @@ async function renderHome() {
             ? `<div style="text-align:center;padding:14px;background:#fee2e2;border-radius:10px;font-size:14px;font-weight:700;color:#991b1b;">⛔ 킥오프! 예측이 마감되었습니다</div>
                ${pred ? `<div class="pending-badge" style="margin-top:8px;font-size:13px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : ''}`
             : `<div style="font-size:13px;color:var(--g500);margin-bottom:12px;text-align:center;">
-                 정확한 스코어를 맞히면 <strong style="color:var(--green);">🏆 당첨!</strong> 당첨자끼리 상금을 1/n으로 나눕니다
+                 정확한 스코어를 맞히면 <strong style="color:var(--green-l);">🏆 당첨!</strong> 당첨자끼리 팟을 1/n으로 나눠가집니다
                </div>
                ${cd ? `<div style="text-align:center;font-size:13px;color:#d97706;font-weight:600;margin-bottom:10px;">⏰ ${cd}</div>` : ''}
                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -778,7 +787,7 @@ async function renderPrize() {
           <div style="font-size:12px;color:#92400e;">1인당 예상 상금 · ${maxWins}회 당첨 · ${winners.length}명 분배</div>
         </div>`;
     } else {
-      document.getElementById('WB').innerHTML = `<div class="card" style="text-align:center;padding:28px;"><div style="font-size:32px;margin-bottom:7px;">⏳</div><div style="font-weight:600;">아직 당첨자가 없습니다</div><div style="font-size:12px;color:var(--g500);margin-top:4px;">경기 결과가 입력되면 당첨자가 확정됩니다</div></div>`;
+      document.getElementById('WB').innerHTML = `<div class="card" style="text-align:center;padding:28px;"><div style="font-size:32px;margin-bottom:7px;">⏳</div><div style="font-weight:600;">아직 당첨자가 없습니다</div><div style="font-size:12px;color:var(--g500);margin-top:4px;">경기 결과가 입력되면 팟 수령자가 확정됩니다</div></div>`;
     }
 
     document.getElementById('PB').innerHTML = scores.map(s => {
