@@ -265,39 +265,8 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   🧪 TEST 서버 · 실제 데이터와 무관합니다 · 테스트 전용
 </div>
 
-<!-- ① SETUP: Supabase 연결 설정 화면 -->
-<div id="SETUP" class="lw">
-  <div class="setup-box">
-    <div class="licon" style="text-align:center;">⚽</div>
-    <div class="setup-title">Supabase 연결 설정</div>
-    <div class="setup-sub">처음 한 번만 입력하면 됩니다</div>
-
-    <div class="setup-step">
-      <strong>① supabase.com</strong> 프로젝트 대시보드 접속<br>
-      → 왼쪽 메뉴 <strong>Settings → API Keys</strong> 클릭<br>
-      → <code>Project URL</code> 복사 (위쪽 Connect 버튼 옆 URL)<br>
-      → <strong>Publishable key</strong> 항목의 <code>sb_publishable_...</code> 키 복사
-    </div>
-    <div class="setup-step" style="background:#fef3c7;border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;">
-      💡 <strong>Project URL 찾는 법:</strong> 대시보드 상단 <strong>Connect</strong> 버튼 클릭 → <code>Session pooler</code> 탭 → Host 주소에서<br>
-      <code>https://[프로젝트ID].supabase.co</code> 형태로 입력
-    </div>
-
-    <div class="fg">
-      <label class="flabel">Supabase Project URL</label>
-      <input class="fi" id="SB_URL" type="text" placeholder="https://xxxx.supabase.co" />
-    </div>
-    <div class="fg">
-      <label class="flabel">Publishable key (sb_publishable_... 로 시작)</label>
-      <input class="fi" id="SB_KEY" type="text" placeholder="sb_publishable_..." />
-    </div>
-    <button class="btn" onclick="saveSetup()">연결하고 시작하기 🚀</button>
-    <p style="font-size:11px;color:var(--g400);margin-top:12px;text-align:center;">입력한 값은 이 브라우저에만 저장됩니다</p>
-  </div>
-</div>
-
 <!-- ② LOGIN -->
-<div id="LP" class="lw" style="display:none;">
+<div id="LP" class="lw">
   <div class="lb">
     <div class="licon">🏆</div>
     <h1 class="ltitle">SB토토</h1>
@@ -491,7 +460,6 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-document.getElementById('SETUP').style.display = 'none';
 document.getElementById('LP').style.display = '';
 
 // ===================== STATE =====================
