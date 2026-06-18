@@ -788,7 +788,12 @@ async function renderHome() {
     // 전체 예측 현황 별도 섹션
     const predSection = document.getElementById('pred-section');
     if (predSection && mainMatch && !isAdminUser) {
-      const matchPreds = allPreds.filter(p => p.match_id === mainMatch.id);
+      // 킥오프 후 미납자 제외
+      const kicked = isKickedOff(mainMatch);
+      const allMatchPreds = allPreds.filter(p => p.match_id === mainMatch.id);
+      const matchPreds = kicked
+        ? allMatchPreds.filter(p => { const u = allUsers.find(u => u.id === p.user_id); return u && u.entry_fee_paid; })
+        : allMatchPreds;
       if (!matchPreds.length) {
         predSection.innerHTML = '';
       } else {
