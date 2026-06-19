@@ -350,6 +350,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
 
   <!-- HOME = 메인 예측 화면 -->
   <div class="page act" id="p-home">
+    <div id="notice-banner"></div>
     <div id="main-match-wrap"></div>
     <div class="sgrid" id="SG"></div>
     <div id="pred-section"></div>
@@ -783,6 +784,30 @@ async function renderHome() {
         </div>`;
     }
 
+    // 이월 배너: 납부자에게만 표시
+    const noticeBanner = document.getElementById('notice-banner');
+    if (noticeBanner) {
+      const isPaidUser = prizeData.scores?.find(s => s.id === CU.id)?.entry_fee_paid || false;
+      const mainDone = mainMatch && mainMatch.result_home !== null && mainMatch.result_home !== undefined;
+      const hasWinners = prizeData.winners && prizeData.winners.length > 0;
+      // 메인 경기 결과 나왔고 적중자 없고 납부자일 때 이월 배너 표시
+      if (isPaidUser && mainDone && !hasWinners && prizeData.totalPool > 0) {
+        noticeBanner.innerHTML = `
+          <div style="background:linear-gradient(135deg,#92400e,#b45309);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;color:#fff;">
+            <div style="font-size:28px;flex-shrink:0;">🎲</div>
+            <div>
+              <div style="font-size:14px;font-weight:800;margin-bottom:3px;">판돈 이월 안내</div>
+              <div style="font-size:13px;opacity:.9;line-height:1.6;">
+                이번 경기 적중자가 없어 판돈 <strong>${fmt(prizeData.totalPool)}</strong>이 다음 경기로 이월됩니다.<br>
+                추가 납부 없이 다음 경기에 자동으로 참여됩니다. 다음 경기에서 도전하세요! 🔥
+              </div>
+            </div>
+          </div>`;
+      } else {
+        noticeBanner.innerHTML = '';
+      }
+    }
+
     // 통계
     const me = prizeData.scores?.find(s => s.id === CU.id) || { wins:0, predicted:0 };
     const isPaid = prizeData.scores?.find(s => s.id === CU.id)?.entry_fee_paid || false;
@@ -1063,16 +1088,15 @@ async function renderHistory() {
   const el = document.getElementById('HIST_LIST');
   el.innerHTML = '<div class="loading"><span class="spinner"></span>불러오는 중...</div>';
   try {
-    const [matches, preds, users] = await Promise.all([
-      dbGet('matches'), dbGet('predictions'), dbGet('users')
+    const [matches, preds, users, snapshots] = await Promise.all([
+      dbGet('matches'), dbGet('predictions'), dbGet('users'), dbGet('paid_snapshots')
     ]);
 
     // 결과가 입력된 경기만, 날짜 내림차순
     const done = matches
       .filter(m => m.result_home !== null && m.result_home !== undefined)
       .sort((a, b) => (b.match_date||'') > (a.match_date||'') ? 1 : -1);
-    // 지난경기: 납부자 예측만 표시
-    const paidUserIds = new Set(users.filter(u => u.entry_fee_paid).map(u => u.id));
+    // 지난경기: 스냅샷 기준으로 경기별 납부자 판단
     if (!done.length) {
       el.innerHTML = '<div class="empty"><div class="eicon">📭</div><p>아직 결과가 입력된 경기가 없습니다</p></div>';
       return;
@@ -1082,15 +1106,20 @@ async function renderHistory() {
     const SC = {group:'sg',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
 
     el.innerHTML = done.map(m => {
+      // 이 경기의 스냅샷 납부자 목록
+      const snapPaidIds = new Set(snapshots.filter(s => s.match_id === m.id).map(s => s.user_id));
+      // 스냅샷 없으면 현재 납부상태 fallback
+      const useFallback = snapPaidIds.size === 0;
+      const effectivePaidIds = useFallback ? new Set(users.filter(u => u.entry_fee_paid).map(u => u.id)) : snapPaidIds;
       const matchPreds = preds.filter(p => p.match_id === m.id);
-      const winners = matchPreds.filter(p => p.pred_home === m.result_home && p.pred_away === m.result_away && paidUserIds.has(p.user_id));
+      const winners = matchPreds.filter(p => p.pred_home === m.result_home && p.pred_away === m.result_away && effectivePaidIds.has(p.user_id));
 
       const rows = matchPreds.length ? matchPreds.map((p, idx) => {
         const user = users.find(u => u.id === p.user_id);
         const uname = user ? user.name : '?';
         const won = p.pred_home === m.result_home && p.pred_away === m.result_away;
         const isMe = p.user_id === CU.id;
-        const isPaid = user && user.entry_fee_paid;
+        const isPaid = effectivePaidIds.has(p.user_id);
         return `<tr style="${!isPaid ? 'opacity:0.45;' : isMe ? 'background:#f0fdf4;font-weight:700;' : idx % 2 === 1 ? 'background:var(--g50);' : ''}">
           <td style="padding:8px 10px;font-size:12px;border-bottom:1px solid var(--g100);color:${isPaid?'inherit':'var(--g400)'};">
             ${isMe ? '⭐ ' : ''}${uname}${!isPaid ? ' <span style="font-size:10px;background:var(--g200);color:var(--g500);padding:1px 5px;border-radius:4px;">미납</span>' : ''}
@@ -1244,6 +1273,15 @@ async function saveResult(id) {
   if (isNaN(h) || isNaN(a)) return toast('결과 점수를 입력해주세요', 'e');
   try {
     await dbUpdate('matches', id, { result_home: h, result_away: a });
+    // 결과 입력 시점의 납부자 목록 스냅샷 저장
+    const users = await dbGet('users');
+    const paidUsers = users.filter(u => u.entry_fee_paid);
+    // 기존 스냅샷 삭제 후 새로 저장
+    const existing = await dbGet('paid_snapshots', { match_id: id });
+    for (const s of existing) await dbDelete('paid_snapshots', s.id);
+    for (const u of paidUsers) {
+      await dbInsert('paid_snapshots', { match_id: id, user_id: u.id });
+    }
     toast('결과 저장 완료! 🎉', 's');
   } catch(e) { toast('저장 실패: ' + e.message, 'e'); }
 }
