@@ -789,7 +789,7 @@ async function renderHome() {
     if (noticeBanner) {
       const isPaidUser = prizeData.scores?.find(s => s.id === CU.id)?.entry_fee_paid || false;
       const mainDone = mainMatch && mainMatch.result_home !== null && mainMatch.result_home !== undefined;
-      const hasWinners = prizeData.winners && prizeData.winners.length > 0;
+      const hasWinners = prizeData.winners && prizeData.winners.length > 0 && prizeData.maxWins > 0;
       // 메인 경기 결과 나왔고 적중자 없고 납부자일 때 이월 배너 표시
       if (isPaidUser && mainDone && !hasWinners && prizeData.totalPool > 0) {
         noticeBanner.innerHTML = `
@@ -797,9 +797,11 @@ async function renderHome() {
             <div style="font-size:28px;flex-shrink:0;">🎲</div>
             <div>
               <div style="font-size:14px;font-weight:800;margin-bottom:3px;">판돈 이월 안내</div>
-              <div style="font-size:13px;opacity:.9;line-height:1.6;">
-                이번 경기 적중자가 없어 판돈 <strong>${fmt(prizeData.totalPool)}</strong>이 다음 경기로 이월됩니다.<br>
-                추가 납부 없이 다음 경기에 자동으로 참여됩니다. 다음 경기에서 도전하세요! 🔥
+              <div style="font-size:13px;opacity:.9;line-height:1.9;">
+                이번 경기 적중자가 없어 판돈 <strong>${fmt(prizeData.totalPool)}</strong>이<br>
+                다음 경기로 이월됩니다.<br>
+                추가 납부 없이 다음 경기에 자동으로 참여됩니다.<br>
+                다음 경기에서 도전하세요! 🔥
               </div>
             </div>
           </div>`;
