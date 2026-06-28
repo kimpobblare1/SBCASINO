@@ -452,9 +452,18 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
         <div id="CHAMPION_ADMIN" style="display:none;">
           <div class="flabel" style="margin-bottom:8px;">우승국 선택 (관리자가 정답 지정)</div>
           <button class="btn btn-out" id="CHAMP_BTN" onclick="openCM('champion')" style="width:100%;text-align:left;padding:8px 11px;margin-top:0;margin-bottom:10px;">🔍 우승국 선택 (정답)</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;">
+            <div>
+              <div class="flabel">예측 마감 날짜</div>
+              <input class="fi" id="CHAMP_DATE" type="date" />
+            </div>
+            <div>
+              <div class="flabel">예측 마감 시간 (KST)</div>
+              <input class="fi" id="CHAMP_TIME" type="time" />
+            </div>
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-sm" onclick="saveChampionSettings()">설정 저장</button>
-            <button class="btn btn-sm btn-gold" onclick="toggleChampionLock()">예측 마감/오픈 전환</button>
           </div>
           <div id="CHAMP_STATUS" style="margin-top:10px;font-size:13px;color:var(--g500);"></div>
         </div>
@@ -1468,22 +1477,41 @@ async function loadChampionAdmin() {
   try {
     const settings = await dbGet('settings');
     const mainType = settings.find(s => s.key === 'main_type')?.value || 'match';
-    const champLocked = settings.find(s => s.key === 'champion_locked')?.value === 'true';
+    const champDeadlineRaw = settings.find(s => s.key === 'champion_deadline')?.value || '';
+    const champLocked = champDeadlineRaw
+      ? Date.now() >= new Date(champDeadlineRaw).getTime()
+      : settings.find(s => s.key === 'champion_locked')?.value === 'true';
     const champAnswer = settings.find(s => s.key === 'champion_answer')?.value || '';
 
     const sel = document.getElementById('MAIN_TYPE');
     if (sel) sel.value = mainType;
     toggleMainType();
 
+    // 마감 시간 입력칸 복원
+    if (champDeadlineRaw) {
+      const d = new Date(champDeadlineRaw);
+      const pad = n => String(n).padStart(2,'0');
+      const kst = new Date(d.getTime() + (d.getTimezoneOffset()*60000) + 9*3600000);
+      const dateStr = kst.getFullYear() + '-' + pad(kst.getMonth()+1) + '-' + pad(kst.getDate());
+      const timeStr = pad(kst.getHours()) + ':' + pad(kst.getMinutes());
+      const dateEl = document.getElementById('CHAMP_DATE');
+      const timeEl = document.getElementById('CHAMP_TIME');
+      if (dateEl) dateEl.value = dateStr;
+      if (timeEl) timeEl.value = timeStr;
+    }
+
     const status = document.getElementById('CHAMP_STATUS');
     if (status) {
-      const lockBtn = document.querySelector('[onclick="toggleChampionLock()"]');
+      const remaining = champDeadlineRaw ? Math.max(0, new Date(champDeadlineRaw).getTime() - Date.now()) : 0;
+      const remText = remaining > 0 ? (() => {
+        const h = Math.floor(remaining/3600000);
+        const m = Math.floor((remaining%3600000)/60000);
+        return h >= 24 ? Math.floor(h/24)+'일 후 마감' : h > 0 ? h+'시간 '+m+'분 후 마감' : m+'분 후 마감';
+      })() : '';
       if (champLocked) {
-        status.innerHTML = '<span style="color:var(--red);font-weight:600;">⛔ 예측 마감 중</span>';
-        if (lockBtn) lockBtn.textContent = '예측 오픈하기 ✓';
+        status.innerHTML = '<span style="color:var(--red);font-weight:600;">⛔ 예측 마감됨</span>';
       } else {
-        status.innerHTML = '<span style="color:#065f46;font-weight:600;">✅ 예측 진행 중</span>';
-        if (lockBtn) lockBtn.textContent = '예측 마감하기 ⛔';
+        status.innerHTML = '<span style="color:#065f46;font-weight:600;">✅ 예측 진행 중' + (remText ? ' · ⏰ ' + remText : '') + '</span>';
       }
     }
     if (champAnswer) {
@@ -1511,6 +1539,11 @@ async function saveChampionSettings() {
     if (mainType === 'champion' && window._champAnswer) {
       await dbUpsert('settings', { key: 'champion_answer', value: JSON.stringify(window._champAnswer) }, 'key');
     }
+    const date = document.getElementById('CHAMP_DATE').value;
+    const time = document.getElementById('CHAMP_TIME').value;
+    if (date && time) {
+      await dbUpsert('settings', { key: 'champion_deadline', value: date + 'T' + time + '+09:00' }, 'key');
+    }
     toast('설정 저장 완료!', 's');
     loadChampionAdmin();
   } catch(e) { toast('오류: ' + e.message, 'e'); }
@@ -1528,14 +1561,37 @@ async function toggleChampionLock() {
 
 async function renderChampion(settings, allUsers) {
   const wrap = document.getElementById('champion-wrap');
+  const matchWrap = document.getElementById('main-match-wrap');
+  const predSection = document.getElementById('pred-section');
   if (!wrap) return;
   const mainType = settings.find(s => s.key === 'main_type')?.value || 'match';
-  if (mainType !== 'champion') { wrap.innerHTML = ''; return; }
+  if (mainType !== 'champion') {
+    wrap.innerHTML = '';
+    if (matchWrap) matchWrap.style.display = '';
+    if (predSection) predSection.style.display = '';
+    return;
+  }
+  // 우승국 모드: 메인경기 숨김
+  if (matchWrap) matchWrap.style.display = 'none';
+  if (predSection) predSection.style.display = 'none';
 
-  const locked = settings.find(s => s.key === 'champion_locked')?.value === 'true';
+  const deadlineRaw = settings.find(s => s.key === 'champion_deadline')?.value || '';
+  const locked = deadlineRaw
+    ? Date.now() >= new Date(deadlineRaw).getTime()
+    : settings.find(s => s.key === 'champion_locked')?.value === 'true';
   const champAnswerRaw = settings.find(s => s.key === 'champion_answer')?.value || '';
   let champAnswer = null;
   try { if (champAnswerRaw) champAnswer = JSON.parse(champAnswerRaw); } catch(e) {}
+
+  // 카운트다운
+  const cdText = (() => {
+    if (!deadlineRaw || locked) return '';
+    const diff = new Date(deadlineRaw).getTime() - Date.now();
+    if (diff <= 0) return '';
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    return h >= 24 ? Math.floor(h/24)+'일 후 마감' : h > 0 ? h+'시간 '+m+'분 후 마감' : m+'분 후 마감';
+  })();
 
   // 내 예측 조회
   const myPred = await dbGet('champion_predictions', { user_id: CU.id });
@@ -1556,9 +1612,21 @@ async function renderChampion(settings, allUsers) {
         <span style="font-size:12px;opacity:.75;">${locked ? '⛔ 예측 마감' : '✅ 예측 진행 중'}</span>
       </div>
       <div style="text-align:center;padding:16px 0;">
-        <div style="font-size:64px;margin-bottom:8px;">${hasResult ? champAnswer.f : '🌍'}</div>
-        <div style="font-size:18px;font-weight:800;">${hasResult ? champAnswer.n : '???'}</div>
-        <div style="font-size:12px;opacity:.7;margin-top:4px;">${hasResult ? '정답 공개됨' : '우승국을 맞혀보세요!'}</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:20px;">
+          <div style="text-align:center;">
+            <div style="font-size:56px;">${hasResult ? champAnswer.f : '🌍'}</div>
+            <div style="font-size:12px;opacity:.7;margin-top:4px;">${hasResult ? champAnswer.n : '우승국'}</div>
+          </div>
+          ${myChamp ? `
+          <div style="font-size:22px;opacity:.5;">vs</div>
+          <div style="text-align:center;">
+            <div style="font-size:56px;">${myChamp.country_flag}</div>
+            <div style="font-size:12px;opacity:.7;margin-top:4px;">내 예측</div>
+            <div style="font-size:11px;opacity:.6;">${myChamp.country_name}</div>
+          </div>` : ''}
+        </div>
+        ${cdText ? `<div style="margin-top:8px;font-size:12px;color:#fcd34d;font-weight:600;">⏰ ${cdText}</div>` : ''}
+        <div style="font-size:14px;font-weight:700;margin-top:8px;">${hasResult ? '정답 공개됨' : '우승국을 맞혀보세요!'}</div>
       </div>
     </div>
     <div class="card" style="margin-bottom:16px;">
@@ -1613,7 +1681,10 @@ async function saveChampionPred(n, f) {
   if (CU.id === 'admin') return toast('관리자는 예측할 수 없습니다', 'e');
   try {
     const settings = await dbGet('settings');
-    const locked = settings.find(s => s.key === 'champion_locked')?.value === 'true';
+    const deadlineRaw = settings.find(s => s.key === 'champion_deadline')?.value || '';
+    const locked = deadlineRaw
+      ? Date.now() >= new Date(deadlineRaw).getTime()
+      : settings.find(s => s.key === 'champion_locked')?.value === 'true';
     if (locked) return toast('예측이 마감되었습니다 ⛔', 'e');
     await dbUpsert('champion_predictions', { user_id: CU.id, country_name: n, country_flag: f }, 'user_id');
     toast('우승국 예측 저장! 🏆', 's');
